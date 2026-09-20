@@ -1,277 +1,265 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jurnal Trading Mini App</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    body { background-color: #0f172a; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
-  </style>
-</head>
-<body class="pb-10">
+body {
+  background-color: #090d16;
+  color: #f1f5f9;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+.glass {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.glass-card {
+  background: rgba(30, 41, 59, 0.5);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glow-win {
+  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
+}
+.glow-loss {
+  box-shadow: 0 0 20px -5px rgba(244, 63, 94, 0.3);
+}
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
 
-  <!-- Header Telegram Mini App -->
-  <header class="glass sticky top-0 z-50 px-4 py-3 shadow-md flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-lg">
-        <i class="fa-solid fa-chart-line text-sm"></i>
-      </div>
-      <div>
-        <h1 class="text-base font-bold leading-tight">Jurnal Trading</h1>
-        <p class="text-xs text-slate-400" id="userGreeting">Telegram Mini App</p>
+
+<!-- Currency Toggle & Action Buttons -->
+<div class="flex items-center space-x-2">
+  <!-- Currency Switcher (USD / Cent) -->
+  <button onclick="toggleCurrency()" id="currencyToggleBtn" title="Ganti Mode Mata Uang" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-bold px-2.5 py-2 rounded-xl transition flex items-center space-x-1">
+    <span id="currencyLabel" class="text-amber-400 font-extrabold">USD ($)</span>
+    <i class="fa-solid fa-arrows-rotate text-[10px] text-slate-400 ml-0.5"></i>
+  </button>
+
+  <!-- Deposit / WD Button -->
+  <button onclick="openFundModal()" title="Deposit / WD" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-xs font-bold p-2.5 rounded-xl transition flex items-center">
+    <i class="fa-solid fa-wallet"></i>
+  </button>
+
+  <!-- Input Trade Button -->
+  <button onclick="openTradeModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center space-x-1 transition active:scale-95">
+    <i class="fa-solid fa-plus text-xs"></i>
+    <span>Trade</span>
+  </button>
+</div>
+
+
+<!-- Quote Motivation Banner -->
+<div class="glass p-3 rounded-2xl border-l-4 border-indigo-500 flex items-start justify-between space-x-3">
+  <div class="space-y-0.5">
+    <div class="flex items-center space-x-1.5 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
+      <i class="fa-solid fa-brain"></i>
+      <span>Psikologi Hari Ini</span>
+    </div>
+    <p id="quoteText" class="text-[11px] text-slate-300 italic font-medium">"Plan the trade and trade the plan. Disiplin adalah kunci utama."</p>
+  </div>
+  <button onclick="nextQuote()" class="text-slate-500 hover:text-indigo-400 p-1"><i class="fa-solid fa-rotate text-xs"></i></button>
+</div>
+
+<!-- Main Balance & Stat Grid -->
+<div class="grid grid-cols-2 gap-3">
+  
+  <!-- Total Balance / Equity -->
+  <div class="glass p-3.5 rounded-2xl border border-indigo-500/20 col-span-2 flex justify-between items-center bg-gradient-to-r from-slate-900/90 via-indigo-950/20 to-slate-900/90">
+    <div>
+      <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Equity / Saldo</span>
+      <div class="text-2xl font-black text-white tracking-tight mt-0.5" id="statTotalBalance">$0.00</div>
+      <div class="text-[10px] text-slate-400 flex items-center space-x-2 mt-1">
+        <span>Depo: <strong class="text-slate-200" id="statTotalDepo">$0</strong></span>
+        <span>•</span>
+        <span>WD: <strong class="text-slate-200" id="statTotalWD">$0</strong></span>
       </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center transition">
-        <i class="fa-solid fa-plus mr-1"></i> Input Trade
+    <div class="text-right">
+      <button onclick="openFundModal()" class="bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold px-3 py-1.5 rounded-xl transition">
+        + Kas Masuk / Keluar
       </button>
-    </div>
-  </header>
-
-  <main class="p-4 space-y-4 max-w-2xl mx-auto">
-    <!-- Stat Metrics -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="glass p-3 rounded-xl">
-        <span class="text-xs text-slate-400 font-medium">Total Net PnL</span>
-        <div class="text-xl font-extrabold mt-1" id="statNetPnL">$0.00</div>
-        <span class="text-[10px] text-slate-500" id="statTradeCount">0 Trades</span>
-      </div>
-      <div class="glass p-3 rounded-xl">
-        <span class="text-xs text-slate-400 font-medium">Win Rate</span>
-        <div class="text-xl font-extrabold text-emerald-400 mt-1" id="statWinRate">0%</div>
-        <div class="text-[10px] text-slate-400 flex justify-between mt-1">
-          <span class="text-emerald-400" id="statWins">W: 0</span>
-          <span class="text-rose-400" id="statLosses">L: 0</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Chart -->
-    <div class="glass p-4 rounded-xl">
-      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Equity Curve</h3>
-      <div class="h-44 w-full">
-        <canvas id="equityChart"></canvas>
-      </div>
-    </div>
-
-    <!-- Trade List -->
-    <div class="glass p-4 rounded-xl space-y-3">
-      <div class="flex justify-between items-center">
-        <h3 class="text-sm font-bold text-slate-200">Riwayat Trading</h3>
-        <button onclick="clearAllTrades()" class="text-xs text-rose-400 hover:text-rose-300">Reset Data</button>
-      </div>
-      <div id="tradeList" class="space-y-2">
-        <!-- Dynamic content -->
-      </div>
-    </div>
-  </main>
-
-  <!-- Modal Input Trade -->
-  <div id="tradeModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="glass bg-slate-900 rounded-2xl w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-base text-slate-100">Tambah Catatan Trade</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
-      
-      <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3 text-xs">
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-slate-400 block mb-1">Pair / Instrument</label>
-            <input type="text" id="pair" required placeholder="XAUUSD, BTCUSDT..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500 uppercase">
-          </div>
-          <div>
-            <label class="text-slate-400 block mb-1">Posisi</label>
-            <select id="type" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
-              <option value="LONG">LONG (BUY)</option>
-              <option value="SHORT">SHORT (SELL)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-slate-400 block mb-1">Entry Price</label>
-            <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
-          </div>
-          <div>
-            <label class="text-slate-400 block mb-1">Exit Price</label>
-            <input type="number" step="any" id="exit" required placeholder="2010.00" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="text-slate-400 block mb-1">Profit/Loss ($ / Rp)</label>
-            <input type="number" step="any" id="pnl" required placeholder="+150 atau -50" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
-          </div>
-          <div>
-            <label class="text-slate-400 block mb-1">Strategi / Setup</label>
-            <input type="text" id="strategy" placeholder="ICT / Breakout / SMC" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
-          </div>
-        </div>
-
-        <div>
-          <label class="text-slate-400 block mb-1">Catatan & Evaluasi</label>
-          <textarea id="notes" rows="2" placeholder="Sesuai plan, tidak emosi..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold p-3 rounded-xl transition shadow-lg mt-2">
-          Simpan Trade
-        </button>
-      </form>
     </div>
   </div>
 
-  <script>
-    // Init Telegram WebApp
-    let tg = window.Telegram ? window.Telegram.WebApp : null;
-    if (tg) {
-      tg.expand();
-      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        document.getElementById('userGreeting').innerText = '@' + tg.initDataUnsafe.user.username;
-      }
-    }
+  <!-- Net PnL Card -->
+  <div class="glass p-3.5 rounded-2xl relative overflow-hidden transition-all duration-300" id="netPnlCard">
+    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Net PnL</span>
+    <div class="text-xl font-black mt-0.5 tracking-tight" id="statNetPnL">$0.00</div>
+    <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
+      <span class="text-slate-400" id="statTradeCount">0 Trades</span>
+      <span class="font-bold text-amber-400" id="statStreak">🔥 0 Streak</span>
+    </div>
+  </div>
 
-    let trades = JSON.parse(localStorage.getItem('trading_journal_data')) || [];
+  <!-- Win Rate Card -->
+  <div class="glass p-3.5 rounded-2xl">
+    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Win Rate</span>
+    <div class="text-xl font-black text-emerald-400 mt-0.5 tracking-tight" id="statWinRate">0%</div>
+    <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
+      <span class="text-emerald-400 font-bold" id="statWins">W: 0</span>
+      <span class="text-rose-400 font-bold" id="statLosses">L: 0</span>
+    </div>
+  </div>
+</div>
 
-    function saveTrade(e) {
-      e.preventDefault();
-      const newTrade = {
-        id: Date.now(),
-        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-        pair: document.getElementById('pair').value.toUpperCase(),
-        type: document.getElementById('type').value,
-        entry: document.getElementById('entry').value,
-        exit: document.getElementById('exit').value,
-        pnl: parseFloat(document.getElementById('pnl').value),
-        strategy: document.getElementById('strategy').value || 'Default',
-        notes: document.getElementById('notes').value
-      };
+<!-- Equity Curve Chart -->
+<div class="glass p-4 rounded-2xl space-y-2">
+  <div class="flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <i class="fa-solid fa-chart-area text-indigo-400 text-xs"></i>
+      <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Pertumbuhan Equity</h3>
+    </div>
+    <span class="text-[9px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full" id="chartAccountTypeLabel">USD Mode</span>
+  </div>
+  <div class="h-44 w-full">
+    <canvas id="equityChart"></canvas>
+  </div>
+</div>
 
-      trades.unshift(newTrade);
-      localStorage.setItem('trading_journal_data', JSON.stringify(trades));
-      closeModal();
-      document.getElementById('tradeForm').reset();
-      updateUI();
-    }
+<!-- Tabs & Records Section -->
+<div class="glass p-4 rounded-2xl space-y-3">
+  <!-- Tab Selection Header -->
+  <div class="flex justify-between items-center flex-wrap gap-2">
+    <div class="flex space-x-2 border-b border-slate-800 w-full pb-2">
+      <button onclick="switchTab('TRADES')" id="tabTradesBtn" class="text-xs font-bold pb-1 text-indigo-400 border-b-2 border-indigo-500 transition">
+        Jurnal Trade (<span id="recordCount">0</span>)
+      </button>
+      <button onclick="switchTab('FUNDS')" id="tabFundsBtn" class="text-xs font-bold pb-1 text-slate-400 hover:text-slate-200 transition">
+        Mutasi Deposit & WD (<span id="fundRecordCount">0</span>)
+      </button>
+    </div>
+  </div>
 
-    function deleteTrade(id) {
-      if(confirm('Hapus jurnal ini?')) {
-        trades = trades.filter(t => t.id !== id);
-        localStorage.setItem('trading_journal_data', JSON.stringify(trades));
-        updateUI();
-      }
-    }
+  <!-- Actions Bar (Trade Filters / Export) -->
+  <div id="tradeActionsBar" class="flex justify-between items-center gap-2">
+    <div class="flex space-x-1 bg-slate-900/80 p-1 rounded-xl text-[11px] font-medium border border-slate-800 flex-1">
+      <button onclick="setFilter('ALL')" id="filterALL" class="flex-1 py-1 rounded-lg bg-indigo-600 text-white font-bold transition">Semua</button>
+      <button onclick="setFilter('WIN')" id="filterWIN" class="flex-1 py-1 rounded-lg text-slate-400 hover:text-emerald-400 transition">WIN</button>
+      <button onclick="setFilter('LOSS')" id="filterLOSS" class="flex-1 py-1 rounded-lg text-slate-400 hover:text-rose-400 transition">LOSS</button>
+    </div>
+    <button onclick="exportToCSV()" title="Export Excel/CSV" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center space-x-1">
+      <i class="fa-solid fa-file-csv text-emerald-400"></i>
+      <span>Export</span>
+    </button>
+    <button onclick="clearAllData()" title="Reset All" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold px-2.5 py-1.5 rounded-xl transition">
+      <i class="fa-solid fa-trash-can"></i>
+    </button>
+  </div>
 
-    function clearAllTrades() {
-      if(confirm('Hapus semua riwayat trading?')) {
-        trades = [];
-        localStorage.removeItem('trading_journal_data');
-        updateUI();
-      }
-    }
+  <!-- Trade Records List -->
+  <div id="tradeList" class="space-y-2 pt-1">
+    <!-- Injected via JavaScript -->
+  </div>
 
-    function openModal() { document.getElementById('tradeModal').classList.remove('hidden'); }
-    function closeModal() { document.getElementById('tradeModal').classList.add('hidden'); }
+  <!-- Fund Mutations List (Deposit / WD) -->
+  <div id="fundList" class="space-y-2 pt-1 hidden">
+    <!-- Injected via JavaScript -->
+  </div>
+</div>
 
-    let chartInstance = null;
-    function renderChart() {
-      const ctx = document.getElementById('equityChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
 
-      let cumulativePnL = 0;
-      const reversedTrades = [...trades].reverse();
-      const labels = reversedTrades.map(t => t.date);
-      const dataPoints = reversedTrades.map(t => {
-        cumulativePnL += t.pnl;
-        return cumulativePnL;
-      });
+  <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3 text-xs">
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">Pair / Instrumen</label>
+        <select id="pair" required class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+          <optgroup label="Forex & Gold">
+            <option value="XAUUSD">XAU/USD (Gold)</option>
+            <option value="EURUSD">EUR/USD</option>
+            <option value="GBPUSD">GBP/USD</option>
+            <option value="USDJPY">USD/JPY</option>
+            <option value="AUDUSD">AUD/USD</option>
+          </optgroup>
+          <optgroup label="Crypto">
+            <option value="BTCUSDT">BTC/USDT</option>
+            <option value="ETHUSDT">ETH/USDT</option>
+            <option value="SOLUSDT">SOL/USDT</option>
+          </optgroup>
+          <optgroup label="Indices">
+            <option value="US30">US30 (Dow Jones)</option>
+            <option value="NAS100">NAS100 (Nasdaq)</option>
+          </optgroup>
+          <optgroup label="Lainnya">
+            <option value="CUSTOM">Lainnya...</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">Posisi Trading</label>
+        <select id="type" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+          <option value="LONG">🟢 LONG (BUY)</option>
+          <option value="SHORT">🔴 SHORT (SELL)</option>
+        </select>
+      </div>
+    </div>
 
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels.length ? labels : ['Start'],
-          datasets: [{
-            label: 'Equity ($)',
-            data: dataPoints.length ? dataPoints : [0],
-            borderColor: '#6366f1',
-            backgroundColor: 'rgba(99, 102, 241, 0.15)',
-            fill: true,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
-          }
-        }
-      });
-    }
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">Harga Entry</label>
+        <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+      </div>
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">Harga Exit</label>
+        <input type="number" step="any" id="exit" required placeholder="2012.00" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+      </div>
+    </div>
 
-    function updateUI() {
-      const listContainer = document.getElementById('tradeList');
-      listContainer.innerHTML = '';
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">
+          Profit / Loss (<span class="currencySymbolText">$</span>)
+        </label>
+        <input type="number" step="any" id="pnl" required placeholder="+150 atau -50" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+      </div>
+      <div>
+        <label class="text-slate-400 font-semibold block mb-1">Setup / Strategi</label>
+        <input type="text" id="strategy" placeholder="SMC / ICT / Breakout" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+      </div>
+    </div>
 
-      let totalPnL = 0;
-      let wins = 0;
-      let losses = 0;
+    <div>
+      <label class="text-slate-400 font-semibold block mb-1">Psikologi / Emosi Saat Entry</label>
+      <select id="emotion" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+        <option value="🧘 Disiplin">🧘 Disiplin (Sesuai Plan)</option>
+        <option value="🚀 Confident">🚀 Confident (High Probability)</option>
+        <option value="⚡ FOMO">⚡ FOMO (Takut Ketinggalan)</option>
+        <option value="🤬 Revenge">🤬 Revenge Trade (Emosi)</option>
+        <option value="😰 Ragu">😰 Ragu / Impulsif</option>
+      </select>
+    </div>
 
-      if (trades.length === 0) {
-        listContainer.innerHTML = '<p class="text-center text-xs text-slate-500 py-6">Belum ada catatan trading. Klik "Input Trade" untuk memulai.</p>';
-      } else {
-        trades.forEach(t => {
-          totalPnL += t.pnl;
-          if (t.pnl > 0) wins++;
-          else if (t.pnl < 0) losses++;
+    <div>
+      <label class="text-slate-400 font-semibold block mb-1">Catatan & Evaluasi</label>
+      <textarea id="notes" rows="2" placeholder="Catatan candle pattern, konfirmasi setup..." class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700"></textarea>
+    </div>
 
-          const isWin = t.pnl >= 0;
-          const card = document.createElement('div');
-          card.className = 'glass-card p-3 rounded-lg flex justify-between items-center text-xs';
-          card.innerHTML = `
-            <div>
-              <div class="flex items-center space-x-2">
-                <span class="font-bold text-slate-100">${t.pair}</span>
-                <span class="${t.type === 'LONG' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'} text-[10px] px-1.5 py-0.5 rounded font-semibold">${t.type}</span>
-                <span class="text-[10px] text-slate-500">${t.date}</span>
-              </div>
-              <p class="text-[11px] text-slate-400 mt-1">E: ${t.entry} | X: ${t.exit} (${t.strategy})</p>
-            </div>
-            <div class="text-right">
-              <span class="font-bold text-sm ${isWin ? 'text-emerald-400' : 'text-rose-400'}">${isWin ? '+' : ''}${t.pnl}</span>
-              <button onclick="deleteTrade(${t.id})" class="block ml-auto mt-1 text-[10px] text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          `;
-          listContainer.appendChild(card);
-        });
-      }
+    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-extrabold p-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 text-xs mt-2">
+      Simpan Catatan Trade
+    </button>
+  </form>
+</div>
 
-      document.getElementById('statNetPnL').innerText = (totalPnL >= 0 ? '+' : '') + '$' + totalPnL.toFixed(2);
-      document.getElementById('statNetPnL').className = 'text-xl font-extrabold mt-1 ' + (totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400');
-      document.getElementById('statTradeCount').innerText = trades.length + ' Trades';
-      
-      const totalClosed = wins + losses;
-      const winRate = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : 0;
-      document.getElementById('statWinRate').innerText = winRate + '%';
-      document.getElementById('statWins').innerText = 'W: ' + wins;
-      document.getElementById('statLosses').innerText = 'L: ' + losses;
 
-      renderChart();
-    }
+  <form id="fundForm" onsubmit="saveFund(event)" class="space-y-3.5 text-xs">
+    <div>
+      <label class="text-slate-400 font-semibold block mb-1">Jenis Transaksi</label>
+      <select id="fundType" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+        <option value="DEPOSIT">📥 Deposit (Tambah Saldo)</option>
+        <option value="WITHDRAW">📤 Withdraw / WD (Tarik Saldo)</option>
+      </select>
+    </div>
 
-    updateUI();
-  </script>
-</body>
-</html>
+    <div>
+      <label class="text-slate-400 font-semibold block mb-1">
+        Jumlah Nominal (<span class="currencySymbolText">$</span>)
+      </label>
+      <input type="number" step="any" id="fundAmount" required placeholder="Contoh: 1000" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
+    </div>
+
+    <div>
+      <label class="text-slate-400 font-semibold block mb-1">Keterangan / Catatan</label>
+      <input type="text" id="fundNote" placeholder="Misal: Modal Awal / WD Mingguan" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+    </div>
+
+    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold p-3 rounded-xl transition shadow-lg shadow-emerald-600/30 text-xs mt-2">
+      Simpan Transaksi Kas
+    </button>
+  </form>
+</div>
