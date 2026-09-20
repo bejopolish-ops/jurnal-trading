@@ -1,0 +1,12 @@
+{
+  "name": "jurnal-trading-telegram",
+  "version": "1.0.0",
+  "description": "Telegram Mini App Jurnal Trading Hosted on Vercel",
+  "main": "api/bot.js",
+  "scripts": {
+    "start": "node api/bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0"
+  }
+}
