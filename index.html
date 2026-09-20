@@ -1,265 +1,560 @@
-body {
-  background-color: #090d16;
-  color: #f1f5f9;
-  font-family: 'Plus Jakarta Sans', sans-serif;
-}
-.glass {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-.glass-card {
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.glow-win {
-  box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3);
-}
-.glow-loss {
-  box-shadow: 0 0 20px -5px rgba(244, 63, 94, 0.3);
-}
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Jurnal Bejo ent</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b0f19; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .glass { background: rgba(18, 24, 38, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+    .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="pb-12">
 
-
-<!-- Currency Toggle & Action Buttons -->
-<div class="flex items-center space-x-2">
-  <!-- Currency Switcher (USD / Cent) -->
-  <button onclick="toggleCurrency()" id="currencyToggleBtn" title="Ganti Mode Mata Uang" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-[11px] font-bold px-2.5 py-2 rounded-xl transition flex items-center space-x-1">
-    <span id="currencyLabel" class="text-amber-400 font-extrabold">USD ($)</span>
-    <i class="fa-solid fa-arrows-rotate text-[10px] text-slate-400 ml-0.5"></i>
-  </button>
-
-  <!-- Deposit / WD Button -->
-  <button onclick="openFundModal()" title="Deposit / WD" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 text-xs font-bold p-2.5 rounded-xl transition flex items-center">
-    <i class="fa-solid fa-wallet"></i>
-  </button>
-
-  <!-- Input Trade Button -->
-  <button onclick="openTradeModal()" class="bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center space-x-1 transition active:scale-95">
-    <i class="fa-solid fa-plus text-xs"></i>
-    <span>Trade</span>
-  </button>
-</div>
-
-
-<!-- Quote Motivation Banner -->
-<div class="glass p-3 rounded-2xl border-l-4 border-indigo-500 flex items-start justify-between space-x-3">
-  <div class="space-y-0.5">
-    <div class="flex items-center space-x-1.5 text-indigo-400 text-[10px] font-bold uppercase tracking-wider">
-      <i class="fa-solid fa-brain"></i>
-      <span>Psikologi Hari Ini</span>
-    </div>
-    <p id="quoteText" class="text-[11px] text-slate-300 italic font-medium">"Plan the trade and trade the plan. Disiplin adalah kunci utama."</p>
-  </div>
-  <button onclick="nextQuote()" class="text-slate-500 hover:text-indigo-400 p-1"><i class="fa-solid fa-rotate text-xs"></i></button>
-</div>
-
-<!-- Main Balance & Stat Grid -->
-<div class="grid grid-cols-2 gap-3">
-  
-  <!-- Total Balance / Equity -->
-  <div class="glass p-3.5 rounded-2xl border border-indigo-500/20 col-span-2 flex justify-between items-center bg-gradient-to-r from-slate-900/90 via-indigo-950/20 to-slate-900/90">
-    <div>
-      <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Equity / Saldo</span>
-      <div class="text-2xl font-black text-white tracking-tight mt-0.5" id="statTotalBalance">$0.00</div>
-      <div class="text-[10px] text-slate-400 flex items-center space-x-2 mt-1">
-        <span>Depo: <strong class="text-slate-200" id="statTotalDepo">$0</strong></span>
-        <span>•</span>
-        <span>WD: <strong class="text-slate-200" id="statTotalWD">$0</strong></span>
-      </div>
-    </div>
-    <div class="text-right">
-      <button onclick="openFundModal()" class="bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 text-[11px] font-bold px-3 py-1.5 rounded-xl transition">
-        + Kas Masuk / Keluar
-      </button>
-    </div>
-  </div>
-
-  <!-- Net PnL Card -->
-  <div class="glass p-3.5 rounded-2xl relative overflow-hidden transition-all duration-300" id="netPnlCard">
-    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Total Net PnL</span>
-    <div class="text-xl font-black mt-0.5 tracking-tight" id="statNetPnL">$0.00</div>
-    <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
-      <span class="text-slate-400" id="statTradeCount">0 Trades</span>
-      <span class="font-bold text-amber-400" id="statStreak">🔥 0 Streak</span>
-    </div>
-  </div>
-
-  <!-- Win Rate Card -->
-  <div class="glass p-3.5 rounded-2xl">
-    <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Win Rate</span>
-    <div class="text-xl font-black text-emerald-400 mt-0.5 tracking-tight" id="statWinRate">0%</div>
-    <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
-      <span class="text-emerald-400 font-bold" id="statWins">W: 0</span>
-      <span class="text-rose-400 font-bold" id="statLosses">L: 0</span>
-    </div>
-  </div>
-</div>
-
-<!-- Equity Curve Chart -->
-<div class="glass p-4 rounded-2xl space-y-2">
-  <div class="flex justify-between items-center">
+  <!-- Header Telegram Mini App -->
+  <header class="glass sticky top-0 z-40 px-4 py-3 shadow-lg flex justify-between items-center">
     <div class="flex items-center space-x-2">
-      <i class="fa-solid fa-chart-area text-indigo-400 text-xs"></i>
-      <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Pertumbuhan Equity</h3>
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center font-bold text-white shadow-md glow-indigo">
+        <i class="fa-solid fa-chart-line text-sm"></i>
+      </div>
+      <div>
+        <h1 class="text-sm font-bold leading-tight flex items-center gap-1.5">
+          Jurnal Trading
+          <span id="rankBadge" class="bg-indigo-500/20 text-indigo-400 text-[10px] px-1.5 py-0.5 rounded-full border border-indigo-500/30">🐣 Novice</span>
+        </h1>
+        <p class="text-[11px] text-slate-400" id="userGreeting">Telegram Mini App</p>
+      </div>
     </div>
-    <span class="text-[9px] text-slate-500 bg-slate-800 px-2 py-0.5 rounded-full" id="chartAccountTypeLabel">USD Mode</span>
-  </div>
-  <div class="h-44 w-full">
-    <canvas id="equityChart"></canvas>
-  </div>
-</div>
-
-<!-- Tabs & Records Section -->
-<div class="glass p-4 rounded-2xl space-y-3">
-  <!-- Tab Selection Header -->
-  <div class="flex justify-between items-center flex-wrap gap-2">
-    <div class="flex space-x-2 border-b border-slate-800 w-full pb-2">
-      <button onclick="switchTab('TRADES')" id="tabTradesBtn" class="text-xs font-bold pb-1 text-indigo-400 border-b-2 border-indigo-500 transition">
-        Jurnal Trade (<span id="recordCount">0</span>)
+    <div class="flex items-center space-x-2">
+      <!-- Currency Switcher -->
+      <button onclick="toggleCurrency()" id="currBtn" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-amber-500/30 text-[11px] font-bold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1">
+        <i class="fa-solid fa-coins"></i> <span id="currLabel">USD ($)</span>
       </button>
-      <button onclick="switchTab('FUNDS')" id="tabFundsBtn" class="text-xs font-bold pb-1 text-slate-400 hover:text-slate-200 transition">
-        Mutasi Deposit & WD (<span id="fundRecordCount">0</span>)
+      <!-- Action Buttons -->
+      <button onclick="openModal('depoModal')" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center">
+        <i class="fa-solid fa-wallet mr-1"></i> Depo/WD
+      </button>
+      <button onclick="openModal('tradeModal')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center glow-indigo">
+        <i class="fa-solid fa-plus mr-1"></i> Trade
       </button>
     </div>
-  </div>
+  </header>
 
-  <!-- Actions Bar (Trade Filters / Export) -->
-  <div id="tradeActionsBar" class="flex justify-between items-center gap-2">
-    <div class="flex space-x-1 bg-slate-900/80 p-1 rounded-xl text-[11px] font-medium border border-slate-800 flex-1">
-      <button onclick="setFilter('ALL')" id="filterALL" class="flex-1 py-1 rounded-lg bg-indigo-600 text-white font-bold transition">Semua</button>
-      <button onclick="setFilter('WIN')" id="filterWIN" class="flex-1 py-1 rounded-lg text-slate-400 hover:text-emerald-400 transition">WIN</button>
-      <button onclick="setFilter('LOSS')" id="filterLOSS" class="flex-1 py-1 rounded-lg text-slate-400 hover:text-rose-400 transition">LOSS</button>
+  <main class="p-4 space-y-4 max-w-2xl mx-auto">
+
+    <!-- Daily Quote Banner -->
+    <div class="glass p-3 rounded-xl border-l-4 border-indigo-500 flex justify-between items-center text-xs text-slate-300">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-quote-left text-indigo-400 text-base"></i>
+        <p id="dailyQuote" class="italic">"Risk comes from not knowing what you are doing."</p>
+      </div>
+      <button onclick="nextQuote()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-rotate-right"></i></button>
     </div>
-    <button onclick="exportToCSV()" title="Export Excel/CSV" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700 transition flex items-center space-x-1">
-      <i class="fa-solid fa-file-csv text-emerald-400"></i>
-      <span>Export</span>
-    </button>
-    <button onclick="clearAllData()" title="Reset All" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 text-xs font-bold px-2.5 py-1.5 rounded-xl transition">
-      <i class="fa-solid fa-trash-can"></i>
-    </button>
-  </div>
 
-  <!-- Trade Records List -->
-  <div id="tradeList" class="space-y-2 pt-1">
-    <!-- Injected via JavaScript -->
-  </div>
-
-  <!-- Fund Mutations List (Deposit / WD) -->
-  <div id="fundList" class="space-y-2 pt-1 hidden">
-    <!-- Injected via JavaScript -->
-  </div>
-</div>
-
-
-  <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3 text-xs">
+    <!-- Stat Metrics Grid -->
     <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">Pair / Instrumen</label>
-        <select id="pair" required class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-          <optgroup label="Forex & Gold">
-            <option value="XAUUSD">XAU/USD (Gold)</option>
-            <option value="EURUSD">EUR/USD</option>
-            <option value="GBPUSD">GBP/USD</option>
-            <option value="USDJPY">USD/JPY</option>
-            <option value="AUDUSD">AUD/USD</option>
-          </optgroup>
-          <optgroup label="Crypto">
-            <option value="BTCUSDT">BTC/USDT</option>
-            <option value="ETHUSDT">ETH/USDT</option>
-            <option value="SOLUSDT">SOL/USDT</option>
-          </optgroup>
-          <optgroup label="Indices">
-            <option value="US30">US30 (Dow Jones)</option>
-            <option value="NAS100">NAS100 (Nasdaq)</option>
-          </optgroup>
-          <optgroup label="Lainnya">
-            <option value="CUSTOM">Lainnya...</option>
-          </optgroup>
-        </select>
+      <!-- Total Balance / Equity -->
+      <div class="glass p-3.5 rounded-2xl relative overflow-hidden">
+        <div class="text-[11px] text-slate-400 font-medium">Total Saldo (Equity)</div>
+        <div class="text-2xl font-black mt-1 tracking-tight text-white" id="statBalance">$0.00</div>
+        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800 pt-1.5">
+          <span>Depo: <strong id="statDepo" class="text-emerald-400">$0</strong></span>
+          <span>WD: <strong id="statWD" class="text-rose-400">$0</strong></span>
+        </div>
       </div>
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">Posisi Trading</label>
-        <select id="type" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-          <option value="LONG">🟢 LONG (BUY)</option>
-          <option value="SHORT">🔴 SHORT (SELL)</option>
-        </select>
+
+      <!-- Net PnL & Win Rate -->
+      <div class="glass p-3.5 rounded-2xl relative overflow-hidden">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] text-slate-400 font-medium">Net PnL</span>
+          <span id="winStreakBadge" class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">🔥 0 Streak</span>
+        </div>
+        <div class="text-2xl font-black mt-1 tracking-tight" id="statNetPnL">$0.00</div>
+        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800 pt-1.5">
+          <span>WR: <strong id="statWinRate" class="text-emerald-400">0%</strong></span>
+          <span id="statWinLoss">W: 0 / L: 0</span>
+        </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">Harga Entry</label>
-        <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+    <!-- Equity Curve Chart -->
+    <div class="glass p-4 rounded-2xl space-y-2">
+      <div class="flex justify-between items-center">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Grafik Pertumbuhan Saldo</h3>
+        <span class="text-[10px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">Real-time</span>
       </div>
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">Harga Exit</label>
-        <input type="number" step="any" id="exit" required placeholder="2012.00" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
-      </div>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">
-          Profit / Loss (<span class="currencySymbolText">$</span>)
-        </label>
-        <input type="number" step="any" id="pnl" required placeholder="+150 atau -50" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-      </div>
-      <div>
-        <label class="text-slate-400 font-semibold block mb-1">Setup / Strategi</label>
-        <input type="text" id="strategy" placeholder="SMC / ICT / Breakout" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
+      <div class="h-44 w-full">
+        <canvas id="equityChart"></canvas>
       </div>
     </div>
 
-    <div>
-      <label class="text-slate-400 font-semibold block mb-1">Psikologi / Emosi Saat Entry</label>
-      <select id="emotion" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-        <option value="🧘 Disiplin">🧘 Disiplin (Sesuai Plan)</option>
-        <option value="🚀 Confident">🚀 Confident (High Probability)</option>
-        <option value="⚡ FOMO">⚡ FOMO (Takut Ketinggalan)</option>
-        <option value="🤬 Revenge">🤬 Revenge Trade (Emosi)</option>
-        <option value="😰 Ragu">😰 Ragu / Impulsif</option>
-      </select>
+    <!-- Tab Section & Action -->
+    <div class="glass p-4 rounded-2xl space-y-3">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <div class="flex space-x-2 text-xs font-bold">
+          <button onclick="switchTab('trades')" id="tabTradesBtn" class="text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1">Riwayat Trade</button>
+          <button onclick="switchTab('trans')" id="tabTransBtn" class="text-slate-400 hover:text-slate-200 pb-2 px-1">Depo & WD</button>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="exportCSV()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg transition border border-slate-700">
+            <i class="fa-solid fa-file-csv mr-1 text-emerald-400"></i> Export
+          </button>
+          <button onclick="clearAllData()" class="text-[11px] text-rose-400 hover:text-rose-300">Reset</button>
+        </div>
+      </div>
+
+      <!-- Content Trades -->
+      <div id="tabTradesContent" class="space-y-2">
+        <!-- Filter Status -->
+        <div class="flex gap-1.5 text-[10px]">
+          <button onclick="filterTrades('ALL')" id="filterAll" class="bg-indigo-600 text-white px-2 py-0.5 rounded-md">Semua</button>
+          <button onclick="filterTrades('WIN')" id="filterWin" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">Win</button>
+          <button onclick="filterTrades('LOSS')" id="filterLoss" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">Loss</button>
+        </div>
+        <div id="tradeList" class="space-y-2 pt-1"></div>
+      </div>
+
+      <!-- Content Transactions (Depo/WD) -->
+      <div id="tabTransContent" class="space-y-2 hidden">
+        <div id="transList" class="space-y-2 pt-1"></div>
+      </div>
     </div>
 
-    <div>
-      <label class="text-slate-400 font-semibold block mb-1">Catatan & Evaluasi</label>
-      <textarea id="notes" rows="2" placeholder="Catatan candle pattern, konfirmasi setup..." class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700"></textarea>
+  </main>
+
+  <!-- Modal Input Trade -->
+  <div id="tradeModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass bg-slate-900 rounded-2xl w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-sm text-slate-100 flex items-center"><i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i> Tambah Catatan Trade</h3>
+        <button onclick="closeModal('tradeModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      
+      <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3 text-xs">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-400 block mb-1">Pair / Market</label>
+            <select id="pair" required class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+              <option value="XAUUSD">XAUUSD (GOLD)</option>
+              <option value="BTCUSDT">BTCUSDT</option>
+              <option value="ETHUSDT">ETHUSDT</option>
+              <option value="EURUSD">EURUSD</option>
+              <option value="GBPUSD">GBPUSD</option>
+              <option value="USDJPY">USDJPY</option>
+              <option value="AUDUSD">AUDUSD</option>
+              <option value="GBPJPY">GBPJPY</option>
+              <option value="US30">US30 (Dow Jones)</option>
+              <option value="NAS100">NAS100 (Nasdaq)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Posisi</label>
+            <select id="type" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+              <option value="LONG">LONG (BUY)</option>
+              <option value="SHORT">SHORT (SELL)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-400 block mb-1">Entry Price</label>
+            <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Exit Price</label>
+            <input type="number" step="any" id="exit" required placeholder="2010.00" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-slate-400 block mb-1">Profit/Loss (<span class="currUnit">$ / ¢</span>)</label>
+            <input type="number" step="any" id="pnl" required placeholder="+150 atau -50" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Mood / Emosi</label>
+            <select id="mood" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+              <option value="🧘 Disiplin">🧘 Disiplin (Sesuai Plan)</option>
+              <option value="🚀 Confident">🚀 Confident</option>
+              <option value="⚡ FOMO">⚡ FOMO</option>
+              <option value="🤬 Revenge">🤬 Revenge Trade</option>
+              <option value="😰 Ragu">😰 Ragu / Takut</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="text-slate-400 block mb-1">Strategi & Catatan</label>
+          <textarea id="notes" rows="2" placeholder="Breakout H1, Sesuai Trading Plan..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500"></textarea>
+        </div>
+
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold p-3 rounded-xl transition shadow-lg glow-indigo mt-2">
+          Simpan Trade
+        </button>
+      </form>
     </div>
+  </div>
 
-    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-95 text-white font-extrabold p-3.5 rounded-xl transition shadow-lg shadow-indigo-600/30 text-xs mt-2">
-      Simpan Catatan Trade
-    </button>
-  </form>
-</div>
+  <!-- Modal Deposit / WD -->
+  <div id="depoModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="glass bg-slate-900 rounded-2xl w-full max-w-md p-5 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-sm text-slate-100 flex items-center"><i class="fa-solid fa-wallet text-emerald-400 mr-2"></i> Input Deposit / Withdraw</h3>
+        <button onclick="closeModal('depoModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
 
+      <form id="depoForm" onsubmit="saveTransaction(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-400 block mb-1">Tipe Transaksi</label>
+          <select id="transType" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <option value="DEPOSIT">DEPOSIT (+)</option>
+            <option value="WITHDRAW">WITHDRAW (-)</option>
+          </select>
+        </div>
 
-  <form id="fundForm" onsubmit="saveFund(event)" class="space-y-3.5 text-xs">
-    <div>
-      <label class="text-slate-400 font-semibold block mb-1">Jenis Transaksi</label>
-      <select id="fundType" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-        <option value="DEPOSIT">📥 Deposit (Tambah Saldo)</option>
-        <option value="WITHDRAW">📤 Withdraw / WD (Tarik Saldo)</option>
-      </select>
+        <div>
+          <label class="text-slate-400 block mb-1">Jumlah Nominal (<span class="currUnit">$ / ¢</span>)</label>
+          <input type="number" step="any" id="transAmount" required placeholder="100.00" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <div>
+          <label class="text-slate-400 block mb-1">Keterangan / Bank / e-Wallet</label>
+          <input type="text" id="transNotes" placeholder="Deposit awal, WD Profit..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+        </div>
+
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl transition shadow-lg mt-2">
+          Simpan Transaksi
+        </button>
+      </form>
     </div>
+  </div>
 
-    <div>
-      <label class="text-slate-400 font-semibold block mb-1">
-        Jumlah Nominal (<span class="currencySymbolText">$</span>)
-      </label>
-      <input type="number" step="any" id="fundAmount" required placeholder="Contoh: 1000" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700 font-bold">
-    </div>
+  <script>
+    // Init Telegram WebApp
+    let tg = window.Telegram ? window.Telegram.WebApp : null;
+    if (tg) {
+      tg.expand();
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        document.getElementById('userGreeting').innerText = '@' + tg.initDataUnsafe.user.username;
+      }
+    }
 
-    <div>
-      <label class="text-slate-400 font-semibold block mb-1">Keterangan / Catatan</label>
-      <input type="text" id="fundNote" placeholder="Misal: Modal Awal / WD Mingguan" class="w-full bg-slate-800/90 rounded-xl p-2.5 text-slate-100 border border-slate-700">
-    </div>
+    // State Data
+    let trades = JSON.parse(localStorage.getItem('tj_trades_v2')) || [];
+    let transactions = JSON.parse(localStorage.getItem('tj_trans_v2')) || [];
+    let isCent = JSON.parse(localStorage.getItem('tj_is_cent')) || false; // false = USD ($), true = Cent (USC ¢)
+    let activeFilter = 'ALL';
 
-    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold p-3 rounded-xl transition shadow-lg shadow-emerald-600/30 text-xs mt-2">
-      Simpan Transaksi Kas
-    </button>
-  </form>
-</div>
+    const quotes = [
+      "\"Risk comes from not knowing what you are doing.\" — Warren Buffett",
+      "\"Plan the trade and trade the plan.\"",
+      "\"Losses are necessary errors that teach us what not to do.\"",
+      "\"The goal of a successful trader is to make the best trades. Money is secondary.\""
+    ];
+    let quoteIdx = 0;
+    function nextQuote() {
+      quoteIdx = (quoteIdx + 1) % quotes.length;
+      document.getElementById('dailyQuote').innerText = quotes[quoteIdx];
+    }
+
+    function toggleCurrency() {
+      isCent = !isCent;
+      localStorage.setItem('tj_is_cent', JSON.stringify(isCent));
+      updateUI();
+    }
+
+    function getUnitSymbol() { return isCent ? '¢' : '$'; }
+    function formatMoney(val) {
+      const sym = getUnitSymbol();
+      const mult = isCent ? 100 : 1;
+      const num = val * mult;
+      return (num >= 0 ? '+' : '') + sym + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function saveTrade(e) {
+      e.preventDefault();
+      const pnlVal = parseFloat(document.getElementById('pnl').value);
+      const newTrade = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        pair: document.getElementById('pair').value,
+        type: document.getElementById('type').value,
+        entry: document.getElementById('entry').value,
+        exit: document.getElementById('exit').value,
+        pnl: pnlVal,
+        mood: document.getElementById('mood').value,
+        notes: document.getElementById('notes').value
+      };
+
+      trades.unshift(newTrade);
+      localStorage.setItem('tj_trades_v2', JSON.stringify(trades));
+      closeModal('tradeModal');
+      document.getElementById('tradeForm').reset();
+
+      if (pnlVal > 0) { confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } }); }
+      updateUI();
+    }
+
+    function saveTransaction(e) {
+      e.preventDefault();
+      const type = document.getElementById('transType').value;
+      const amount = Math.abs(parseFloat(document.getElementById('transAmount').value));
+      const newTrans = {
+        id: Date.now(),
+        date: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+        type: type,
+        amount: amount,
+        notes: document.getElementById('transNotes').value || '-'
+      };
+
+      transactions.unshift(newTrans);
+      localStorage.setItem('tj_trans_v2', JSON.stringify(transactions));
+      closeModal('depoModal');
+      document.getElementById('depoForm').reset();
+      updateUI();
+    }
+
+    function deleteTrade(id) {
+      if(confirm('Hapus jurnal trade ini?')) {
+        trades = trades.filter(t => t.id !== id);
+        localStorage.setItem('tj_trades_v2', JSON.stringify(trades));
+        updateUI();
+      }
+    }
+
+    function deleteTrans(id) {
+      if(confirm('Hapus riwayat transaksi ini?')) {
+        transactions = transactions.filter(t => t.id !== id);
+        localStorage.setItem('tj_trans_v2', JSON.stringify(transactions));
+        updateUI();
+      }
+    }
+
+    function clearAllData() {
+      if(confirm('Hapus seluruh riwayat trade dan transaksi?')) {
+        trades = [];
+        transactions = [];
+        localStorage.removeItem('tj_trades_v2');
+        localStorage.removeItem('tj_trans_v2');
+        updateUI();
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+    function switchTab(tab) {
+      if (tab === 'trades') {
+        document.getElementById('tabTradesContent').classList.remove('hidden');
+        document.getElementById('tabTransContent').classList.add('hidden');
+        document.getElementById('tabTradesBtn').className = 'text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1';
+        document.getElementById('tabTransBtn').className = 'text-slate-400 hover:text-slate-200 pb-2 px-1';
+      } else {
+        document.getElementById('tabTradesContent').classList.add('hidden');
+        document.getElementById('tabTransContent').classList.remove('hidden');
+        document.getElementById('tabTransBtn').className = 'text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1';
+        document.getElementById('tabTradesBtn').className = 'text-slate-400 hover:text-slate-200 pb-2 px-1';
+      }
+    }
+
+    function filterTrades(type) {
+      activeFilter = type;
+      ['All', 'Win', 'Loss'].forEach(f => {
+        const btn = document.getElementById('filter' + f);
+        if (f.toUpperCase() === type) {
+          btn.className = 'bg-indigo-600 text-white px-2 py-0.5 rounded-md';
+        } else {
+          btn.className = 'bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md';
+        }
+      });
+      renderTradeList();
+    }
+
+    let chartInstance = null;
+    function renderChart() {
+      const ctx = document.getElementById('equityChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      let currentBal = 0;
+      let dataPoints = [];
+      let labels = [];
+
+      let combinedEvents = [
+        ...transactions.map(t => ({ date: t.date, val: t.type === 'DEPOSIT' ? t.amount : -t.amount, id: t.id })),
+        ...trades.map(t => ({ date: t.date, val: t.pnl, id: t.id }))
+      ].sort((a,b) => a.id - b.id);
+
+      combinedEvents.forEach(e => {
+        currentBal += e.val;
+        dataPoints.push(currentBal * (isCent ? 100 : 1));
+        labels.push(e.date);
+      });
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels.length ? labels : ['Start'],
+          datasets: [{
+            label: 'Saldo (' + getUnitSymbol() + ')',
+            data: dataPoints.length ? dataPoints : [0],
+            borderColor: '#6366f1',
+            backgroundColor: 'rgba(99, 102, 241, 0.12)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 9 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 9 } } }
+          }
+        }
+      });
+    }
+
+    function renderTradeList() {
+      const container = document.getElementById('tradeList');
+      container.innerHTML = '';
+
+      let filtered = trades;
+      if (activeFilter === 'WIN') filtered = trades.filter(t => t.pnl > 0);
+      if (activeFilter === 'LOSS') filtered = trades.filter(t => t.pnl < 0);
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p class="text-center text-xs text-slate-500 py-6">Tidak ada catatan trade.</p>';
+        return;
+      }
+
+      filtered.forEach(t => {
+        const isWin = t.pnl >= 0;
+        const card = document.createElement('div');
+        card.className = 'glass-card p-3 rounded-xl flex justify-between items-center text-xs border-l-2 ' + (isWin ? 'border-l-emerald-400' : 'border-l-rose-400');
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold text-slate-100">${t.pair}</span>
+              <span class="${t.type === 'LONG' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'} text-[10px] px-1.5 py-0.2 rounded font-semibold">${t.type}</span>
+              <span class="text-[10px] bg-slate-800 text-slate-400 px-1.5 py-0.2 rounded">${t.mood || '🧘 Disiplin'}</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Entry: ${t.entry} | Exit: ${t.exit} ${t.notes ? '| ' + t.notes : ''}</p>
+            <span class="text-[9px] text-slate-500">${t.date}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-bold text-sm ${isWin ? 'text-emerald-400' : 'text-rose-400'}">${formatMoney(t.pnl)}</span>
+            <button onclick="deleteTrade(${t.id})" class="block ml-auto mt-1 text-[10px] text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderTransList() {
+      const container = document.getElementById('transList');
+      container.innerHTML = '';
+
+      if (transactions.length === 0) {
+        container.innerHTML = '<p class="text-center text-xs text-slate-500 py-6">Belum ada riwayat Deposit/WD.</p>';
+        return;
+      }
+
+      transactions.forEach(t => {
+        const isDepo = t.type === 'DEPOSIT';
+        const card = document.createElement('div');
+        card.className = 'glass-card p-3 rounded-xl flex justify-between items-center text-xs border-l-2 ' + (isDepo ? 'border-l-emerald-400' : 'border-l-rose-400');
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center space-x-2">
+              <span class="font-bold ${isDepo ? 'text-emerald-400' : 'text-rose-400'}">${t.type}</span>
+              <span class="text-[10px] text-slate-400">${t.notes}</span>
+            </div>
+            <span class="text-[9px] text-slate-500">${t.date}</span>
+          </div>
+          <div class="text-right">
+            <span class="font-bold text-sm ${isDepo ? 'text-emerald-400' : 'text-rose-400'}">${isDepo ? '+' : '-'}${getUnitSymbol()}${(t.amount * (isCent ? 100 : 1)).toFixed(2)}</span>
+            <button onclick="deleteTrans(${t.id})" class="block ml-auto mt-1 text-[10px] text-slate-500 hover:text-rose-400"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function exportCSV() {
+      if (trades.length === 0) { alert('Belum ada data untuk di-export.'); return; }
+      let csv = 'ID,Tanggal,Pair,Posisi,Entry,Exit,PnL,Mood,Catatan\n';
+      trades.forEach(t => {
+        csv += `"${t.id}","${t.date}","${t.pair}","${t.type}","${t.entry}","${t.exit}","${t.pnl}","${t.mood || ''}","${t.notes || ''}"\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'Jurnal_Trading_' + new Date().toISOString().slice(0,10) + '.csv');
+      a.click();
+    }
+
+    function updateUI() {
+      // Toggle Label Header
+      document.getElementById('currLabel').innerText = isCent ? 'Cent (USC ¢)' : 'USD ($)';
+      document.querySelectorAll('.currUnit').forEach(el => el.innerText = getUnitSymbol());
+
+      // Calculate Stats
+      let totalDepo = transactions.filter(t => t.type === 'DEPOSIT').reduce((acc, t) => acc + t.amount, 0);
+      let totalWD = transactions.filter(t => t.type === 'WITHDRAW').reduce((acc, t) => acc + t.amount, 0);
+      let totalPnL = trades.reduce((acc, t) => acc + t.pnl, 0);
+      let totalBalance = totalDepo - totalWD + totalPnL;
+
+      let wins = trades.filter(t => t.pnl > 0).length;
+      let losses = trades.filter(t => t.pnl < 0).length;
+      let totalClosed = wins + losses;
+      let winRate = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : 0;
+
+      // Calculate Win Streak
+      let streak = 0;
+      for (let t of trades) {
+        if (t.pnl > 0) streak++;
+        else break;
+      }
+
+      // Rank Gamification
+      const count = trades.length;
+      let rank = '🐣 Novice';
+      if (count > 5) rank = '🛡️ Trader';
+      if (count > 15) rank = '⚡ Pro Trader';
+      if (count > 30) rank = '👑 Master';
+      if (count > 50) rank = '🪐 Legend';
+
+      document.getElementById('rankBadge').innerText = rank;
+      document.getElementById('statBalance').innerText = getUnitSymbol() + (totalBalance * (isCent ? 100 : 1)).toLocaleString('en-US', { minimumFractionDigits: 2 });
+      document.getElementById('statDepo').innerText = getUnitSymbol() + (totalDepo * (isCent ? 100 : 1)).toFixed(0);
+      document.getElementById('statWD').innerText = getUnitSymbol() + (totalWD * (isCent ? 100 : 1)).toFixed(0);
+
+      document.getElementById('statNetPnL').innerText = formatMoney(totalPnL);
+      document.getElementById('statNetPnL').className = 'text-2xl font-black mt-1 tracking-tight ' + (totalPnL >= 0 ? 'text-emerald-400' : 'text-rose-400');
+      document.getElementById('statWinRate').innerText = winRate + '%';
+      document.getElementById('statWinLoss').innerText = 'W: ' + wins + ' / L: ' + losses;
+      document.getElementById('winStreakBadge').innerText = '🔥 ' + streak + ' Streak';
+
+      renderTradeList();
+      renderTransList();
+      renderChart();
+    }
+
+    // Initial Load
+    updateUI();
+  </script>
+</body>
+</html>
