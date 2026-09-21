@@ -3,78 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Jurnal Trading Mini App (Cent Account)</title>
+  <title>Jurnal Trading Cent Mini App</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { background-color: #0b0f19; color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .glass { background: rgba(18, 24, 38, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.05); }
-    .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.2); }
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    body { background-color: #0b0f19; color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
+    .glass { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.07); }
+    .glass-card { background: rgba(20, 30, 50, 0.5); border: 1px solid rgba(255, 255, 255, 0.05); }
+    .glow-gold { box-shadow: 0 0 20px rgba(245, 158, 11, 0.25); }
+    .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.25); }
+    
+    /* Bottom Sheet Animation */
+    .sheet-backdrop { transition: opacity 0.25s ease-in-out; }
+    .sheet-content { transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    .sheet-backdrop.hidden-sheet { opacity: 0; pointer-events: none; }
+    .sheet-backdrop.hidden-sheet .sheet-content { transform: translateY(100%); }
+
+    ::-webkit-scrollbar { width: 0px; height: 0px; } /* Hide scrollbar for native app feel */
   </style>
 </head>
-<body class="pb-12">
+<body class="pb-24 pt-2">
 
-  <!-- Header Telegram Mini App -->
-  <header class="glass sticky top-0 z-40 px-4 py-3 shadow-lg flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md glow-indigo">
-        <i class="fa-solid fa-coins text-sm"></i>
+  <!-- Header Ringkas -->
+  <header class="px-4 py-2 flex justify-between items-center max-w-2xl mx-auto">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center font-bold text-slate-950 shadow-lg glow-gold">
+        <i class="fa-solid fa-coins text-lg"></i>
       </div>
       <div>
-        <h1 class="text-sm font-bold leading-tight flex items-center gap-1.5">
-          Bejo ent. <span class="text-amber-400 font-extrabold">(CENT)</span>
-          <span id="rankBadge" class="bg-indigo-500/20 text-indigo-400 text-[10px] px-1.5 py-0.5 rounded-full border border-indigo-500/30">🐣 Novice</span>
-        </h1>
+        <div class="flex items-center gap-1.5">
+          <h1 class="text-sm font-extrabold text-white tracking-wide">Jurnal Cent</h1>
+          <span id="rankBadge" class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-amber-500/30">🐣 Novice</span>
+        </div>
         <p class="text-[11px] text-slate-400" id="userGreeting">Akun Cent (USC ¢)</p>
       </div>
     </div>
-    <div class="flex items-center space-x-2">
-      <button onclick="openModal('depoModal')" class="bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center">
-        <i class="fa-solid fa-wallet mr-1"></i> Depo/WD
+    
+    <div class="flex items-center space-x-1.5">
+      <button onclick="exportCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs p-2 rounded-xl border border-slate-700 transition">
+        <i class="fa-solid fa-file-csv text-emerald-400"></i>
       </button>
-      <button onclick="openModal('tradeModal')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center glow-indigo">
-        <i class="fa-solid fa-plus mr-1"></i> Trade
+      <button onclick="clearAllData()" class="bg-slate-800 hover:bg-slate-700 text-rose-400 text-xs p-2 rounded-xl border border-slate-700 transition">
+        <i class="fa-solid fa-rotate-left"></i>
       </button>
     </div>
   </header>
 
   <main class="p-4 space-y-4 max-w-2xl mx-auto">
 
-    <!-- Daily Quote Banner -->
-    <div class="glass p-3 rounded-xl border-l-4 border-amber-500 flex justify-between items-center text-xs text-slate-300">
-      <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-quote-left text-amber-400 text-base"></i>
-        <p id="dailyQuote" class="italic">"Risk comes from not knowing what you are doing."</p>
+    <!-- Quote Motivasi -->
+    <div class="glass p-3 rounded-2xl border-l-4 border-amber-500 flex justify-between items-center text-xs text-slate-300">
+      <div class="flex items-center space-x-2.5 overflow-hidden">
+        <i class="fa-solid fa-quote-left text-amber-400 text-sm flex-shrink-0"></i>
+        <p id="dailyQuote" class="italic truncate">"Plan the trade and trade the plan."</p>
       </div>
-      <button onclick="nextQuote()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-rotate-right"></i></button>
+      <button onclick="nextQuote()" class="text-slate-400 hover:text-white ml-2 flex-shrink-0"><i class="fa-solid fa-rotate-right"></i></button>
     </div>
 
-    <!-- Stat Metrics Grid -->
+    <!-- Target Goal Progress Card -->
+    <div class="glass p-4 rounded-2xl space-y-2.5 relative overflow-hidden">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-bullseye text-amber-400 text-xs"></i>
+          <span class="text-xs font-bold text-slate-300">Target Profit (Goal)</span>
+        </div>
+        <button onclick="editGoal()" class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-lg border border-amber-500/20">
+          Set Target <i class="fa-solid fa-pen text-[8px] ml-0.5"></i>
+        </button>
+      </div>
+      
+      <div class="flex justify-between items-end">
+        <div>
+          <span class="text-xs text-slate-400">Pencapaian: </span>
+          <span id="goalProgressText" class="text-sm font-extrabold text-white">¢0 / ¢10.000</span>
+        </div>
+        <span id="goalPercentText" class="text-xs font-black text-amber-400">0%</span>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5 border border-slate-700/50">
+        <div id="goalProgressBar" class="bg-gradient-to-r from-amber-500 to-emerald-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+    </div>
+
+    <!-- Metric Cards Grid -->
     <div class="grid grid-cols-2 gap-3">
-      <!-- Total Balance / Equity Cent -->
-      <div class="glass p-3.5 rounded-2xl relative overflow-hidden">
-        <div class="text-[11px] text-slate-400 font-medium">Total Saldo (Cent / ¢)</div>
+      <!-- Total Saldo Cent -->
+      <div class="glass p-3.5 rounded-2xl">
+        <div class="text-[11px] text-slate-400 font-medium">Total Saldo (Cent)</div>
         <div class="text-2xl font-black mt-1 tracking-tight text-amber-400" id="statBalance">¢0.00</div>
-        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800 pt-1.5">
+        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800/80 pt-1.5">
           <span>Depo: <strong id="statDepo" class="text-emerald-400">¢0</strong></span>
           <span>WD: <strong id="statWD" class="text-rose-400">¢0</strong></span>
         </div>
       </div>
 
       <!-- Net PnL & Win Rate -->
-      <div class="glass p-3.5 rounded-2xl relative overflow-hidden">
+      <div class="glass p-3.5 rounded-2xl">
         <div class="flex justify-between items-center">
-          <span class="text-[11px] text-slate-400 font-medium">Net PnL (Cent)</span>
+          <span class="text-[11px] text-slate-400 font-medium">Net PnL</span>
           <span id="winStreakBadge" class="text-[10px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold">🔥 0 Streak</span>
         </div>
         <div class="text-2xl font-black mt-1 tracking-tight" id="statNetPnL">¢0.00</div>
-        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800 pt-1.5">
+        <div class="flex justify-between text-[10px] text-slate-400 mt-2 border-t border-slate-800/80 pt-1.5">
           <span>WR: <strong id="statWinRate" class="text-emerald-400">0%</strong></span>
           <span id="statWinLoss">W: 0 / L: 0</span>
         </div>
@@ -84,41 +118,34 @@
     <!-- Equity Curve Chart -->
     <div class="glass p-4 rounded-2xl space-y-2">
       <div class="flex justify-between items-center">
-        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Grafik Pertumbuhan Saldo (Cent)</h3>
+        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Grafik Pertumbuhan Saldo</h3>
         <span class="text-[10px] text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">Real-time</span>
       </div>
-      <div class="h-44 w-full">
+      <div class="h-40 w-full">
         <canvas id="equityChart"></canvas>
       </div>
     </div>
 
-    <!-- Tab Section & Action -->
+    <!-- Content Tabs & Filters -->
     <div class="glass p-4 rounded-2xl space-y-3">
       <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-        <div class="flex space-x-2 text-xs font-bold">
-          <button onclick="switchTab('trades')" id="tabTradesBtn" class="text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1">Riwayat Trade</button>
+        <div class="flex space-x-3 text-xs font-bold">
+          <button onclick="switchTab('trades')" id="tabTradesBtn" class="text-amber-400 border-b-2 border-amber-500 pb-2 px-1">Riwayat Trade</button>
           <button onclick="switchTab('trans')" id="tabTransBtn" class="text-slate-400 hover:text-slate-200 pb-2 px-1">Depo & WD</button>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="exportCSV()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded-lg transition border border-slate-700">
-            <i class="fa-solid fa-file-csv mr-1 text-emerald-400"></i> Export
-          </button>
-          <button onclick="clearAllData()" class="text-[11px] text-rose-400 hover:text-rose-300">Reset</button>
         </div>
       </div>
 
       <!-- Content Trades -->
       <div id="tabTradesContent" class="space-y-2">
-        <!-- Filter Status -->
         <div class="flex gap-1.5 text-[10px]">
-          <button onclick="filterTrades('ALL')" id="filterAll" class="bg-indigo-600 text-white px-2 py-0.5 rounded-md">Semua</button>
-          <button onclick="filterTrades('WIN')" id="filterWin" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">Win</button>
-          <button onclick="filterTrades('LOSS')" id="filterLoss" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md">Loss</button>
+          <button onclick="filterTrades('ALL')" id="filterAll" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-semibold">Semua</button>
+          <button onclick="filterTrades('WIN')" id="filterWin" class="bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg font-semibold">Win</button>
+          <button onclick="filterTrades('LOSS')" id="filterLoss" class="bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg font-semibold">Loss</button>
         </div>
         <div id="tradeList" class="space-y-2 pt-1"></div>
       </div>
 
-      <!-- Content Transactions (Depo/WD) -->
+      <!-- Content Transactions -->
       <div id="tabTransContent" class="space-y-2 hidden">
         <div id="transList" class="space-y-2 pt-1"></div>
       </div>
@@ -126,34 +153,59 @@
 
   </main>
 
-  <!-- Modal Input Trade -->
-  <div id="tradeModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="glass bg-slate-900 rounded-2xl w-full max-w-md p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-sm text-slate-100 flex items-center"><i class="fa-solid fa-pen-to-square text-indigo-400 mr-2"></i> Catat Trade (Cent)</h3>
-        <button onclick="closeModal('tradeModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-      </div>
+  <!-- BOTTOM NAVIGATION BAR (Mobile First) -->
+  <nav class="fixed bottom-0 left-0 right-0 glass border-t border-slate-800 px-4 py-2 z-40">
+    <div class="max-w-2xl mx-auto flex justify-around items-center">
+      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); triggerHaptic();" class="flex flex-col items-center text-amber-400">
+        <i class="fa-solid fa-chart-pie text-base"></i>
+        <span class="text-[10px] mt-1 font-semibold">Home</span>
+      </button>
+
+      <button onclick="openModal('depoModal')" class="flex flex-col items-center text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-wallet text-base"></i>
+        <span class="text-[10px] mt-1 font-semibold">Depo/WD</span>
+      </button>
+
+      <!-- Floating Main Action Button -->
+      <button onclick="openModal('tradeModal')" class="bg-gradient-to-tr from-amber-500 to-amber-400 text-slate-950 w-12 h-12 rounded-full flex items-center justify-center text-lg font-black shadow-lg glow-gold -mt-5 border-2 border-slate-900 transition active:scale-95">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+
+      <button onclick="switchTab('trades'); triggerHaptic();" class="flex flex-col items-center text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-list-check text-base"></i>
+        <span class="text-[10px] mt-1 font-semibold">Jurnal</span>
+      </button>
+
+      <button onclick="exportCSV(); triggerHaptic();" class="flex flex-col items-center text-slate-400 hover:text-slate-200">
+        <i class="fa-solid fa-download text-base"></i>
+        <span class="text-[10px] mt-1 font-semibold">Export</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- BOTTOM SHEET MODAL: Catat Trade -->
+  <div id="tradeModal" class="sheet-backdrop hidden-sheet fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center">
+    <div class="sheet-content glass bg-slate-900 w-full max-w-2xl rounded-t-3xl p-5 space-y-4 border-t border-slate-700 max-h-[85vh] overflow-y-auto">
+      <!-- Drag Handle -->
+      <div class="w-12 h-1.5 bg-slate-700 rounded-full mx-auto -mt-1 mb-2"></div>
       
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-sm text-slate-100 flex items-center"><i class="fa-solid fa-pen-to-square text-amber-400 mr-2"></i> Catat Trade Cent</h3>
+        <button onclick="closeModal('tradeModal')" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
       <form id="tradeForm" onsubmit="saveTrade(event)" class="space-y-3 text-xs">
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-slate-400 block mb-1">Pair / Market</label>
-            <select id="pair" required class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <select id="pair" required class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
               <option value="XAUUSD">XAUUSD (GOLD)</option>
               <option value="BTCUSDT">BTCUSDT</option>
-              <option value="ETHUSDT">ETHUSDT</option>
-              <option value="EURUSD">EURUSD</option>
-              <option value="GBPUSD">GBPUSD</option>
-              <option value="USDJPY">USDJPY</option>
-              <option value="AUDUSD">AUDUSD</option>
-              <option value="GBPJPY">GBPJPY</option>
-              <option value="US30">US30 (Dow Jones)</option>
-              <option value="NAS100">NAS100 (Nasdaq)</option>
             </select>
           </div>
           <div>
             <label class="text-slate-400 block mb-1">Posisi</label>
-            <select id="type" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <select id="type" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
               <option value="LONG">LONG (BUY)</option>
               <option value="SHORT">SHORT (SELL)</option>
             </select>
@@ -163,22 +215,22 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-slate-400 block mb-1">Entry Price</label>
-            <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <input type="number" step="any" id="entry" required placeholder="2000.50" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
           </div>
           <div>
             <label class="text-slate-400 block mb-1">Exit Price</label>
-            <input type="number" step="any" id="exit" required placeholder="2010.00" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <input type="number" step="any" id="exit" required placeholder="2010.00" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-slate-400 block mb-1">Profit/Loss (dalam ¢ Cent)</label>
-            <input type="number" step="any" id="pnl" required placeholder="+1500 atau -500" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <label class="text-slate-400 block mb-1">Profit/Loss (¢ Cent)</label>
+            <input type="number" step="any" id="pnl" required placeholder="+1500 atau -500" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
           </div>
           <div>
             <label class="text-slate-400 block mb-1">Mood / Emosi</label>
-            <select id="mood" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+            <select id="mood" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
               <option value="🧘 Disiplin">🧘 Disiplin (Sesuai Plan)</option>
               <option value="🚀 Confident">🚀 Confident</option>
               <option value="⚡ FOMO">⚡ FOMO</option>
@@ -189,29 +241,31 @@
         </div>
 
         <div>
-          <label class="text-slate-400 block mb-1">Strategi & Catatan</label>
-          <textarea id="notes" rows="2" placeholder="Breakout H1, Sesuai Trading Plan..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500"></textarea>
+          <label class="text-slate-400 block mb-1">Catatan & Strategi</label>
+          <textarea id="notes" rows="2" placeholder="Breakout H1, Sesuai Plan..." class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500"></textarea>
         </div>
 
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold p-3 rounded-xl transition shadow-lg glow-indigo mt-2">
+        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold p-3.5 rounded-xl transition shadow-lg glow-gold mt-2">
           Simpan Trade (Cent)
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Deposit / WD -->
-  <div id="depoModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-    <div class="glass bg-slate-900 rounded-2xl w-full max-w-md p-5 space-y-4">
+  <!-- BOTTOM SHEET MODAL: Depo / WD -->
+  <div id="depoModal" class="sheet-backdrop hidden-sheet fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center">
+    <div class="sheet-content glass bg-slate-900 w-full max-w-2xl rounded-t-3xl p-5 space-y-4 border-t border-slate-700">
+      <div class="w-12 h-1.5 bg-slate-700 rounded-full mx-auto -mt-1 mb-2"></div>
+
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-sm text-slate-100 flex items-center"><i class="fa-solid fa-wallet text-emerald-400 mr-2"></i> Input Deposit / WD (Cent)</h3>
-        <button onclick="closeModal('depoModal')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeModal('depoModal')" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <form id="depoForm" onsubmit="saveTransaction(event)" class="space-y-3 text-xs">
         <div>
           <label class="text-slate-400 block mb-1">Tipe Transaksi</label>
-          <select id="transType" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          <select id="transType" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
             <option value="DEPOSIT">DEPOSIT (+)</option>
             <option value="WITHDRAW">WITHDRAW (-)</option>
           </select>
@@ -219,23 +273,23 @@
 
         <div>
           <label class="text-slate-400 block mb-1">Nominal Cent (¢)</label>
-          <input type="number" step="any" id="transAmount" required placeholder="Misal: 10000 untuk 10000¢" class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          <input type="number" step="any" id="transAmount" required placeholder="Contoh: 10000 untuk 10.000¢" class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
         </div>
 
         <div>
-          <label class="text-slate-400 block mb-1">Keterangan / Bank / e-Wallet</label>
-          <input type="text" id="transNotes" placeholder="Deposit awal akun cent, WD Profit..." class="w-full bg-slate-800 rounded-lg p-2.5 text-slate-100 border border-slate-700 focus:outline-none focus:border-indigo-500">
+          <label class="text-slate-400 block mb-1">Keterangan / Catatan</label>
+          <input type="text" id="transNotes" placeholder="Deposit awal akun cent, WD Profit..." class="w-full bg-slate-800 rounded-xl p-3 text-slate-100 border border-slate-700 focus:outline-none focus:border-amber-500">
         </div>
 
-        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3 rounded-xl transition shadow-lg mt-2">
-          Simpan Transaksi (Cent)
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold p-3.5 rounded-xl transition shadow-lg mt-2">
+          Simpan Transaksi
         </button>
       </form>
     </div>
   </div>
 
   <script>
-    // Init Telegram WebApp
+    // Telegram WebApp Setup & Haptic Feedback Helper
     let tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) {
       tg.expand();
@@ -244,9 +298,18 @@
       }
     }
 
-    // State Data (Seluruh angka disimpan murni dalam satuan Cent)
+    function triggerHaptic(type = 'light') {
+      if (tg && tg.HapticFeedback) {
+        if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+        else if (type === 'error') tg.HapticFeedback.notificationOccurred('warning');
+        else tg.HapticFeedback.impactOccurred(type);
+      }
+    }
+
+    // State Data
     let trades = JSON.parse(localStorage.getItem('tj_trades_cent')) || [];
     let transactions = JSON.parse(localStorage.getItem('tj_trans_cent')) || [];
+    let targetGoal = JSON.parse(localStorage.getItem('tj_goal_cent')) || 10000; // Default goal 10,000¢
     let activeFilter = 'ALL';
 
     const quotes = [
@@ -257,8 +320,19 @@
     ];
     let quoteIdx = 0;
     function nextQuote() {
+      triggerHaptic();
       quoteIdx = (quoteIdx + 1) % quotes.length;
       document.getElementById('dailyQuote').innerText = quotes[quoteIdx];
+    }
+
+    function editGoal() {
+      triggerHaptic();
+      let newGoal = prompt('Masukkan target profit bersih kamu (dalam Cent / ¢):', targetGoal);
+      if (newGoal && !isNaN(newGoal)) {
+        targetGoal = parseFloat(newGoal);
+        localStorage.setItem('tj_goal_cent', JSON.stringify(targetGoal));
+        updateUI();
+      }
     }
 
     function formatMoney(val) {
@@ -285,12 +359,19 @@
       closeModal('tradeModal');
       document.getElementById('tradeForm').reset();
 
-      if (pnlVal > 0) { confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } }); }
+      if (pnlVal > 0) {
+        triggerHaptic('success');
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.8 } });
+      } else {
+        triggerHaptic('error');
+      }
+
       updateUI();
     }
 
     function saveTransaction(e) {
       e.preventDefault();
+      triggerHaptic('success');
       const type = document.getElementById('transType').value;
       const amount = Math.abs(parseFloat(document.getElementById('transAmount').value));
       const newTrans = {
@@ -309,7 +390,8 @@
     }
 
     function deleteTrade(id) {
-      if(confirm('Hapus jurnal trade cent ini?')) {
+      triggerHaptic();
+      if(confirm('Hapus catatan trade ini?')) {
         trades = trades.filter(t => t.id !== id);
         localStorage.setItem('tj_trades_cent', JSON.stringify(trades));
         updateUI();
@@ -317,7 +399,8 @@
     }
 
     function deleteTrans(id) {
-      if(confirm('Hapus riwayat transaksi cent ini?')) {
+      triggerHaptic();
+      if(confirm('Hapus riwayat transaksi ini?')) {
         transactions = transactions.filter(t => t.id !== id);
         localStorage.setItem('tj_trans_cent', JSON.stringify(transactions));
         updateUI();
@@ -325,7 +408,8 @@
     }
 
     function clearAllData() {
-      if(confirm('Hapus seluruh riwayat trade & transaksi akun cent?')) {
+      triggerHaptic('error');
+      if(confirm('Hapus seluruh riwayat trade & transaksi?')) {
         trades = [];
         transactions = [];
         localStorage.removeItem('tj_trades_cent');
@@ -334,31 +418,39 @@
       }
     }
 
-    function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
-    function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    function openModal(id) {
+      triggerHaptic();
+      document.getElementById(id).classList.remove('hidden-sheet');
+    }
+
+    function closeModal(id) {
+      triggerHaptic();
+      document.getElementById(id).classList.add('hidden-sheet');
+    }
 
     function switchTab(tab) {
       if (tab === 'trades') {
         document.getElementById('tabTradesContent').classList.remove('hidden');
         document.getElementById('tabTransContent').classList.add('hidden');
-        document.getElementById('tabTradesBtn').className = 'text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1';
+        document.getElementById('tabTradesBtn').className = 'text-amber-400 border-b-2 border-amber-500 pb-2 px-1';
         document.getElementById('tabTransBtn').className = 'text-slate-400 hover:text-slate-200 pb-2 px-1';
       } else {
         document.getElementById('tabTradesContent').classList.add('hidden');
         document.getElementById('tabTransContent').classList.remove('hidden');
-        document.getElementById('tabTransBtn').className = 'text-indigo-400 border-b-2 border-indigo-500 pb-2 px-1';
+        document.getElementById('tabTransBtn').className = 'text-amber-400 border-b-2 border-amber-500 pb-2 px-1';
         document.getElementById('tabTradesBtn').className = 'text-slate-400 hover:text-slate-200 pb-2 px-1';
       }
     }
 
     function filterTrades(type) {
+      triggerHaptic();
       activeFilter = type;
       ['All', 'Win', 'Loss'].forEach(f => {
         const btn = document.getElementById('filter' + f);
         if (f.toUpperCase() === type) {
-          btn.className = 'bg-indigo-600 text-white px-2 py-0.5 rounded-md';
+          btn.className = 'bg-indigo-600 text-white px-2.5 py-1 rounded-lg font-semibold';
         } else {
-          btn.className = 'bg-slate-800 text-slate-400 px-2 py-0.5 rounded-md';
+          btn.className = 'bg-slate-800 text-slate-400 px-2.5 py-1 rounded-lg font-semibold';
         }
       });
       renderTradeList();
@@ -419,7 +511,7 @@
       if (activeFilter === 'LOSS') filtered = trades.filter(t => t.pnl < 0);
 
       if (filtered.length === 0) {
-        container.innerHTML = '<p class="text-center text-xs text-slate-500 py-6">Tidak ada catatan trade.</p>';
+        container.innerHTML = '<p class="text-center text-xs text-slate-500 py-6">Belum ada catatan trade.</p>';
         return;
       }
 
@@ -491,7 +583,7 @@
     }
 
     function updateUI() {
-      // Calculate Stats (Cent)
+      // Stats Calculation
       let totalDepo = transactions.filter(t => t.type === 'DEPOSIT').reduce((acc, t) => acc + t.amount, 0);
       let totalWD = transactions.filter(t => t.type === 'WITHDRAW').reduce((acc, t) => acc + t.amount, 0);
       let totalPnL = trades.reduce((acc, t) => acc + t.pnl, 0);
@@ -502,14 +594,20 @@
       let totalClosed = wins + losses;
       let winRate = totalClosed > 0 ? Math.round((wins / totalClosed) * 100) : 0;
 
-      // Calculate Win Streak
+      // Win Streak Calculation
       let streak = 0;
       for (let t of trades) {
         if (t.pnl > 0) streak++;
         else break;
       }
 
-      // Rank Gamification
+      // Target Goal Calculation
+      let pct = targetGoal > 0 ? Math.min(100, Math.max(0, Math.round((totalPnL / targetGoal) * 100))) : 0;
+      document.getElementById('goalProgressText').innerText = '¢' + totalPnL.toLocaleString('en-US') + ' / ¢' + targetGoal.toLocaleString('en-US');
+      document.getElementById('goalPercentText').innerText = pct + '%';
+      document.getElementById('goalProgressBar').style.width = pct + '%';
+
+      // Rank Badging
       const count = trades.length;
       let rank = '🐣 Novice';
       if (count > 5) rank = '🛡️ Trader';
